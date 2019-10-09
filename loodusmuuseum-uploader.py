@@ -31,8 +31,6 @@ def build_id_file():
 
 def complete_desc_and_upload(url, pagetitle, image_description, author, date, categories, fileId):
     # complete this once if applies to all files
-    print (author)
-    print ("""[[Category:Photographs by """ + author + """]]""")
     description = u"""{{Information
 |Description    = """ + image_description + """
 |Source         = {{Institution:Estonian Museum of Natural History}}
@@ -44,7 +42,6 @@ def complete_desc_and_upload(url, pagetitle, image_description, author, date, ca
 """ + categories + """
 [[Category:Photographs by """ + author + """]]
 """
-    print (description)
     keepFilename = True  # set to True to skip double-checking/editing destination filename
     verifyDescription = False  # set to False to skip double-checking/editing description => change to bot-mode
     targetSite = pywikibot.getSite('commons', 'commons')
@@ -118,10 +115,7 @@ def main(args):
             f.close()
             continue
 
-        print (fileInfo['author__forename'])
-        print (fileInfo['author__surename'])
         author = fileInfo['author__forename'] + " " + fileInfo['author__surename']
-        print (author)
 
         specimensResponse = requests.get(
             "https://api.geocollections.info/file/" + fileId + "?fields=filename,specimen,specimen__specimenidentification__taxon__taxon,specimen__specimenidentification__name,specimen__specimenidentificationgeologies__rock__name,specimen__specimenidentificationgeologies__name&format=json")
@@ -140,7 +134,6 @@ def main(args):
                 speciesList.append(specimen['specimen__specimenidentification__name'])
         specimenList = list(dict.fromkeys(specimenList))
         specimenList = [replaceCategoryNames(x) for x in specimenList]
-        print (specimenList)
         speciesList = list(dict.fromkeys(speciesList))
 
         if not specimenList:
