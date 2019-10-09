@@ -31,14 +31,13 @@ def build_id_file():
 
 def complete_desc_and_upload(url, pagetitle, image_description, author, date, categories, fileId):
     # complete this once if applies to all files
-
     print (author)
     print ("""[[Category:Photographs by """ + author + """]]""")
     description = u"""{{Information
 |Description    = """ + image_description + """
 |Source         = {{Institution:Estonian Museum of Natural History}}
 |Author         = """ + author + """
-|Date           = """ + date + """
+|Date           = """ + (date if date is not None else '') + """
 |Permission     = {{cc-by-sa-4.0}}
 |other_fields   = {{EMNH geo}}
 }}\n
