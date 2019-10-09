@@ -95,6 +95,10 @@ def main(args):
 
         if fileInfo['licence__licence_url_en'] != "https://creativecommons.org/licenses/by-sa/4.0":
             print ("Wrong license")
+            # We add the id to the not uploadable ids file
+            f = open("ids_not_uploadable.txt", "a")
+            f.write('{}\n'.format(fileId))
+            f.close()
             continue
 
         fileName = fileInfo['uuid_filename']
