@@ -35,7 +35,7 @@ def complete_desc_and_upload(url, pagetitle, image_description, author, date, ca
 |Description    = """ + image_description + """
 |Source         = {{Institution:Estonian Museum of Natural History}}
 |Author         = """ + author + """
-|Date           = """ + (date if date is not None else '') + """
+|Date           = """ + (date if date is not None else '{{Upload date}}') + """
 |Permission     = {{cc-by-sa-4.0}}
 |other_fields   = {{EMNH geo}}
 }}\n
