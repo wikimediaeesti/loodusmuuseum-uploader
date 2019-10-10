@@ -133,6 +133,8 @@ def main(args):
                 specimenList.append(specimen['specimen__specimenidentification__taxon__taxon'])
             if specimen['specimen__specimenidentificationgeologies__rock__name'] is not None:
                 rockTypesList.append(specimen['specimen__specimenidentificationgeologies__rock__name'])
+            if specimen['specimen__specimenidentificationgeologies__name'] is not None:
+                rockTypesList.append(specimen['specimen__specimenidentificationgeologies__name'])
             if specimen['specimen__specimenidentification__name'] is not None:
                 specimenList.append(specimen['specimen__specimenidentification__name'].split(' ', 1)[0])
                 speciesList.append(specimen['specimen__specimenidentification__name'])
