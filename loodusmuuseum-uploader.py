@@ -31,19 +31,19 @@ def build_id_file():
 
 def complete_desc_and_upload(url, pagetitle, image_description, author, date, categories, fileId):
     # complete this once if applies to all files
-
     description = u"""{{Information
 |Description    = """ + image_description + """
 |Source         = {{Institution:Estonian Museum of Natural History}}
 |Author         = """ + author + """
-|Date           = """ + date + """
+|Date           = """ + (date if date is not None else '{{Upload date}}') + """
 |Permission     = {{cc-by-sa-4.0}}
 |other_fields   = {{EMNH geo}}
-}}""" + categories + """
+}}\n
+""" + categories + """
 [[Category:Photographs by """ + author + """]]
 """
-    keepFilename = False  # set to True to skip double-checking/editing destination filename
-    verifyDescription = True  # set to False to skip double-checking/editing description => change to bot-mode
+    keepFilename = True  # set to True to skip double-checking/editing destination filename
+    verifyDescription = False  # set to False to skip double-checking/editing description => change to bot-mode
     targetSite = pywikibot.getSite('commons', 'commons')
 
     bot = UploadRobot(url, description=description, useFilename=pagetitle, keepFilename=keepFilename,
@@ -57,6 +57,14 @@ def complete_desc_and_upload(url, pagetitle, image_description, author, date, ca
 
     # We wait to not upload too quickly
     time.sleep(30)
+
+def replaceCategoryNames(name):
+    switcher = {
+        "Gastropoda": "Gastropoda fossils",
+        "Bivalvia": "Bivalvia fossils"
+    }
+    return switcher.get(name, name)
+
 
 def main(args):
     if not os.stat("ids_to_upload.txt").st_size:
@@ -76,7 +84,9 @@ def main(args):
 
     idsToUpload = list((set(ids) - set(uploadedIds)) - set(notUploadableIds))
 
-    for fileId in idsToUpload[:30]:
+    for fileId in idsToUpload:
+        time.sleep(5)
+        print ("Looking at ID " + fileId)
         response = requests.get(
             "https://api.geocollections.info/file/" + fileId + "?format=json")
         data = response.json()
@@ -85,6 +95,10 @@ def main(args):
 
         if fileInfo['licence__licence_url_en'] != "https://creativecommons.org/licenses/by-sa/4.0":
             print ("Wrong license")
+            # We add the id to the not uploadable ids file
+            f = open("ids_not_uploadable.txt", "a")
+            f.write('{}\n'.format(fileId))
+            f.close()
             continue
 
         fileName = fileInfo['uuid_filename']
@@ -97,6 +111,14 @@ def main(args):
         fileUrl=f"https://files.geocollections.info/{fileFolder1}/{fileFolder2}/{fileName}"
         pagetitle = f"Estonian Museum of Natural History {fileTitle}.jpg"
         date = fileInfo['date_created']
+        if (not fileInfo['author__forename']) or (not fileInfo['author__surename']):
+            print ("No author name available")
+            # We add the id to the not uploadable ids file
+            f = open("ids_not_uploadable.txt", "a")
+            f.write('{}\n'.format(fileId))
+            f.close()
+            continue
+
         author = fileInfo['author__forename'] + " " + fileInfo['author__surename']
 
         specimensResponse = requests.get(
@@ -104,21 +126,26 @@ def main(args):
         specimensData = specimensResponse.json()
         specimenList = []
         speciesList = []
+        rockTypesList = []
 
         for specimen in specimensData['results']:
-            if specimen is not None:
-                if specimen['specimen__specimenidentification__taxon__taxon'] is not None:
-                    specimenList.append(specimen['specimen__specimenidentification__taxon__taxon'])
-                if specimen['specimen__specimenidentification__name'] is not None:
-                    specimenList.append(specimen['specimen__specimenidentification__name'].split(' ', 1)[0])
-                    speciesList.append(specimen['specimen__specimenidentification__name'])
+            if specimen['specimen__specimenidentification__taxon__taxon'] is not None:
+                specimenList.append(specimen['specimen__specimenidentification__taxon__taxon'])
+            if specimen['specimen__specimenidentificationgeologies__rock__name'] is not None:
+                rockTypesList.append(specimen['specimen__specimenidentificationgeologies__rock__name'])
+            if specimen['specimen__specimenidentificationgeologies__name'] is not None:
+                rockTypesList.append(specimen['specimen__specimenidentificationgeologies__name'])
+            if specimen['specimen__specimenidentification__name'] is not None:
+                specimenList.append(specimen['specimen__specimenidentification__name'].split(' ', 1)[0])
+                speciesList.append(specimen['specimen__specimenidentification__name'])
         specimenList = list(dict.fromkeys(specimenList))
+        specimenList = [replaceCategoryNames(x) for x in specimenList]
         speciesList = list(dict.fromkeys(speciesList))
 
         if not specimenList:
             categories = ""
         else:
-            categories = "[[Category:" + "]] [[Category:".join(specimenList) + "]]"
+            categories = "[[Category:" + "]]\n[[Category:".join(specimenList) + "]]"
 
         englishDescription = None
         estonianDescription = None
@@ -126,6 +153,15 @@ def main(args):
         if speciesList:
             estonianDescription = ', '.join(speciesList) + '.'
             englishDescription = estonianDescription
+
+            if fileInfo['image_description']:
+                estonianDescription = estonianDescription + ' ' + fileInfo['image_description']
+
+            if fileInfo['image_description_en']:
+                englishDescription = englishDescription + ' ' + fileInfo['image_description_en']
+        elif rockTypesList:
+            estonianDescription = ', '.join(rockTypesList) + '.'
+            englishDescription = ', '.join('"{0}"'.format(rockType) for rockType in rockTypesList) + '.'
 
             if fileInfo['image_description']:
                 estonianDescription = estonianDescription + ' ' + fileInfo['image_description']
