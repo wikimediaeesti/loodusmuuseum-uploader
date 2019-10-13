@@ -139,6 +139,7 @@ def main(args):
                 specimenList.append(specimen['specimen__specimenidentification__name'].split(' ', 1)[0])
                 speciesList.append(specimen['specimen__specimenidentification__name'])
         specimenList = list(dict.fromkeys(specimenList))
+        rockTypesList = list(dict.fromkeys(rockTypesList))
         specimenList = [replaceCategoryNames(x) for x in specimenList]
         speciesList = list(dict.fromkeys(speciesList))
 
